@@ -5,16 +5,19 @@ const print = std.debug.print;
 const Token = token.Token;
 const TokenMap = token.TokenType;
 
+pub fn New(input: []const u8) Lexer {
+    return .{ .input = input };
+}
+
 const Lexer = struct {
     const Self = @This();
-    allocator: *std.mem.Allocator,
     input: []const u8,
     position: i16,
     read_position: i16,
     ch: []const u8,
 
-    fn nextToken(self:Self) !void {
-        var tok = token.Token;
+    fn nextToken(self: Self) !void {
+        var tok: token.Token = undefined;
 
         self.skipWhiteSpace();
 
@@ -24,44 +27,76 @@ const Lexer = struct {
                     var ch = self.ch;
                     self.readChar();
                     var literal = ch + self.ch;
-                    var tok = token.Token{.Type = TokenMap.EQ, .Literal = literal};
+                    tok = token.Token{ .Type = TokenMap.EQ, .Literal = literal };
                 } else {
-                    var tok = newToken(TokenMap.ASSIGN, Self.ch);
+                    tok = newToken(TokenMap.ASSIGN, Self.ch);
                 }
             },
-            '+' => {tok = newToken(TokenMap.PLUS, Self.ch);},
-            '-' => {tok = newToken(TokenMap.MINUS, Self.ch);},
-            '/' => {tok = newToken(TokenMap.SLASH, Self.ch);},
+            '+' => {
+                tok = newToken(TokenMap.PLUS, Self.ch);
+            },
+            '-' => {
+                tok = newToken(TokenMap.MINUS, Self.ch);
+            },
+            '/' => {
+                tok = newToken(TokenMap.SLASH, Self.ch);
+            },
             '!' => {
                 if (self.peekChar() == '=') {
                     var ch = self.ch;
                     self.readChar();
                     // are we adding two strings here?
                     var literal = ch + self.ch;
-                    var tok = token.Token{.Type = TokenMap.NOT_EQ, .Literal = literal};
+                    tok = token.Token{ .Type = TokenMap.NOT_EQ, .Literal = literal };
                 } else {
-                    var tok = newToken(TokenMap.BANG, self.ch);
+                    tok = newToken(TokenMap.BANG, self.ch);
                 }
             },
-            '*' => {tok = newToken(TokenMap.ASTERISK, Self.ch);},
-            '<' => {tok = newToken(TokenMap.LT, Self.ch);},
-            '>' => {tok = newToken(TokenMap.GT, Self.ch);},
-            ';' => {tok = newToken(TokenMap.SEMICOLON, Self.ch);},
-            ':' => {tok = newToken(TokenMap.COLON, Self.ch);},
-            ',' => {tok = newToken(TokenMap.COMMA, Self.ch);},
-            '{' => {tok = newToken(TokenMap.LBRACE, Self.ch);},
-            '}' => {tok = newToken(TokenMap.RBRACE, Self.ch);},
-            '(' => {tok = newToken(TokenMap.LPAREN, Self.ch);},
-            ')' => {tok = newToken(TokenMap.RPAREN, Self.ch);},
-            '[' => {tok = newToken(TokenMap.LBRACKET, Self.ch);},
-            ']' => {tok = newToken(TokenMap.RBRACKET, Self.ch);},
-            0 => {token.Token{.Type = TokenMap.EOF, .Literal = ""};},
+            '*' => {
+                tok = newToken(TokenMap.ASTERISK, Self.ch);
+            },
+            '<' => {
+                tok = newToken(TokenMap.LT, Self.ch);
+            },
+            '>' => {
+                tok = newToken(TokenMap.GT, Self.ch);
+            },
+            ';' => {
+                tok = newToken(TokenMap.SEMICOLON, Self.ch);
+            },
+            ':' => {
+                tok = newToken(TokenMap.COLON, Self.ch);
+            },
+            ',' => {
+                tok = newToken(TokenMap.COMMA, Self.ch);
+            },
+            '{' => {
+                tok = newToken(TokenMap.LBRACE, Self.ch);
+            },
+            '}' => {
+                tok = newToken(TokenMap.RBRACE, Self.ch);
+            },
+            '(' => {
+                tok = newToken(TokenMap.LPAREN, Self.ch);
+            },
+            ')' => {
+                tok = newToken(TokenMap.RPAREN, Self.ch);
+            },
+            '[' => {
+                tok = newToken(TokenMap.LBRACKET, Self.ch);
+            },
+            ']' => {
+                tok = newToken(TokenMap.RBRACKET, Self.ch);
+            },
+            0 => {
+                token.Token{ .Type = TokenMap.EOF, .Literal = "" };
+            },
             else => {
                 if (self.isLetter(self.ch)) {
-                    token.Token{.Type = token.LookupIdent(tok.Literal), .Literal = self.readIdentifier()};
+                    token.Token{ .Type = token.LookupIdent(tok.Literal), .Literal = self.readIdentifier() };
                     return tok;
                 } else if (self.isDigit(self.ch)) {
-                    token.Token{.Type = Token.INT, .Literal = self.readNumber()};
+                    token.Token{ .Type = Token.INT, .Literal = self.readNumber() };
                     return tok;
                 } else {
                     tok = newToken(TokenMap.ILLEGAL, self.ch);
@@ -143,37 +178,37 @@ const Lexer = struct {
     }
 
     fn newToken(tokenType: token.TokeyType, ch: []const u8) Token {
-        return token.Token{.Type = tokenType, .Literal = ch};
+        return token.Token{ .Type = tokenType, .Literal = ch };
     }
 };
 
 test "lexer" {
     print("/n", .{});
     defer {
-        print ("/n", .{});
+        print("/n", .{});
     }
 
-    const input: []const u8 = 
-        //let five = 5;
-        //let ten = 10;
-        //
-        //let add = fn(x, y) {
-        //  x + y;
-        //};
-        //
-        //let result = add(five, ten);
-        //!-/*5;
-        //5 < 10 > 5;
-        //
-        //if (5< 10) {
-        //  return true;
-        //} else {
-        //  return false;
-        //}
-        //
-        //10 == 10;
-        //10 != 9;
-        ;
+    const input: []const u8 =
+        \\let five = 5;
+        \\let ten = 10;
+        \\
+        \\let add = fn(x, y) {
+        \\  x + y;
+        \\};
+        \\
+        \\let result = add(five, ten);
+        \\!-/*5;
+        \\5 < 10 > 5;
+        \\
+        \\if (5< 10) {
+        \\  return true;
+        \\} else {
+        \\  return false;
+        \\}
+        \\
+        \\10 == 10;
+        \\10 != 9;
+    ;
 
     const expected = [_]token.Token{
         .{ .type = token.TokenType.LET, .literal = "let" },
@@ -250,4 +285,16 @@ test "lexer" {
         .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
     };
 
+    var lexer = New(input);
+    var i: u8 = 0;
 
+    while (lexer.nextToken()) |tokenItr| : (i += 1) {
+        print("{d}\t{}\n", .{ tokenItr.literal, tokenItr.type });
+        // access the i-th element of expected
+        const expected_tok = expected[i];
+        // see if the expected type equals the actual type
+        try std.testing.expectEqual(expected_tok.type, tokenItr.type);
+        // access the expected literal
+        try std.testing.expectEqual(expected_tok.literal[0], tokenItr.literal[0]);
+    }
+}
